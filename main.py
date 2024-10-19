@@ -123,7 +123,6 @@ with col1:
 
     # Function to add all ingredients from session state
     def add_all_ingredients():
-        for ingredient in st.session_state['ingredients']:
             add_ingredient(ingredient[0], ingredient[1])
 
         # Text input for ingredients
