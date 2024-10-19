@@ -106,27 +106,29 @@ with col1:
     def add_ingredient():
         ingredient_name = st.session_state['ingredient_input']
         ingredient_amount = st.session_state['amount_input']
-
+    
         if ingredient_name:  # Check if ingredient name is not empty
-            # Check if ingredient already exists
             for i, (name, amount) in enumerate(st.session_state['ingredients']):
-                if name.lower() == ingredient_name.lower():  # Case-insensitive comparison
-                    # If ingredient already exists and amount is provided, sum the amounts
-                    if ingredient_amount:  # Only sum if an amount is provided
+                if name.lower() == ingredient_name.lower():
+                    if ingredient_amount:
                         try:
-                            new_amount = str(float(amount.split()[0]) + float(ingredient_amount.split()[0])) + ' ' + ingredient_amount.split()[1]
+                            # Split and convert safely
+                            amount_value = float(amount.split()[0])  # First part of existing amount
+                            ingredient_value = float(ingredient_amount.split()[0])  # First part of new amount
+                            new_amount = str(amount_value + ingredient_value) + ' ' + ingredient_amount.split()[1]
                             st.session_state['ingredients'][i] = (name, new_amount)
-                        except ValueError:
+                        except (ValueError, IndexError):
                             st.warning("Invalid amount format. Please enter a valid number.")
                     break
             else:
-                # Add new ingredient if it doesn't exist
-                amount_to_add = ingredient_amount if ingredient_amount else "No amount specified"  # Use a default message if no amount is provided
+                # Add new ingredient
+                amount_to_add = ingredient_amount if ingredient_amount else "No amount specified"
                 st.session_state['ingredients'].append((ingredient_name, amount_to_add))
+    
+            # Clear input fields
+            st.session_state['amount_input'] = ""
+            st.session_state['ingredient_input'] = ""
 
-            # Clear input fields after adding the ingredient
-            st.session_state['amount_input'] = ""  # Reset amount input
-            st.session_state['ingredient_input'] = ""  # Reset ingredient input
 
         # Text input for ingredients
     col_input, col_amount = st.columns(2)
