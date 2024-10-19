@@ -147,7 +147,7 @@ with col1:
 
 
 # Fetch recipes button
-st.header("QUICKBITE")
+st.image("quickbite_logo.png", width=300)
 if st.button("SEARCH RECIPES"):
     if not st.session_state['ingredients']:
         st.error("Please add ingredients before searching for recipes.")
