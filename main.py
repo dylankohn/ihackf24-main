@@ -105,43 +105,33 @@ with col1:
     # Function to add ingredient (with manual addition option)
     # Function to add ingredient (with manual addition option)
     # Function to add ingredient (adjusted to take parameters)
-    # Function to add ingredient
-   # Function to add ingredient
-    def add_ingredient():
-        ingredient_name = st.session_state['ingredient_input']
-        ingredient_amount = st.session_state['amount_input']
-
-        if not ingredient_name:  # Check if ingredient name is not empty
-            st.warning("Please enter an ingredient name.")  # Show warning if name is empty
-            return  # Exit early if no ingredient name
-
-        if not ingredient_amount:  # Check if ingredient amount is provided
-            st.warning("Please enter an amount for the ingredient.")  # Show warning if amount is empty
-             # Exit early if no amount is provided
-
-        # Check if ingredient already exists
-        for i, (name, amount) in enumerate(st.session_state['ingredients']):
-            if name.lower() == ingredient_name.lower():  # Case-insensitive comparison
-                # If ingredient already exists and amount is provided, sum the amounts
-                if ingredient_amount:  # Only sum if an amount is provided
-                    try:
-                        new_amount = str(float(amount.split()[0]) + float(ingredient_amount.split()[0])) + ' ' + ingredient_amount.split()[1]
-                        st.session_state['ingredients'][i] = (name, new_amount)
-                        st.success(f"Updated amount for {ingredient_name}.")  # Success message for updating ingredient
-                    except ValueError:
-                        st.warning("Invalid amount format. Please enter a valid number.")
-                break
-        else:
-            # Add new ingredient if it doesn't exist
-            amount_to_add = ingredient_amount if ingredient_amount else "No amount specified"  # Use a default message if no amount is provided
-            st.session_state['ingredients'].append((ingredient_name, amount_to_add))
-            st.success(f"{ingredient_name} added successfully!")  # Success message for adding ingredient
-    
-        # Clear input fields after adding the ingredient
-        st.session_state['amount_input'] = ""  # Reset amount input
-        st.session_state['ingredient_input'] = ""  # Reset ingredient input
-
-
+    def add_ingredient(ingredient_name=None, ingredient_amount=None):
+            if ingredient_name is None:
+                ingredient_name = st.session_state['ingredient_input']
+            if ingredient_amount is None:
+                ingredient_amount = st.session_state['amount_input']
+            
+            if ingredient_name:  # Check if ingredient name is not empty
+                # Check if ingredient already exists
+                for i, (name, amount) in enumerate(st.session_state['ingredients']):
+                    if name.lower() == ingredient_name.lower():  # Case-insensitive comparison
+                        # If ingredient already exists and amount is provided, sum the amounts
+                        if ingredient_amount:  # Only sum if an amount is provided
+                            try:
+                                new_amount = str(float(amount.split()[0]) + float(ingredient_amount.split()[0])) + ' ' + ingredient_amount.split()[1]
+                                st.session_state['ingredients'][i] = (name, new_amount)
+                            except ValueError:
+                                st.warning("Invalid amount format. Please enter a valid number.")
+                        break
+                else:
+                    # Add new ingredient if it doesn't exist
+                    amount_to_add = ingredient_amount if ingredient_amount else "No amount specified"  # Use a default message if no amount is provided
+                    st.session_state['ingredients'].append((ingredient_name, amount_to_add))
+                    st.success(f"{ingredient_name} added successfully!")  # Success message for adding ingredient
+            
+                # Clear input fields after adding the ingredient
+                st.session_state['amount_input'] = ""  # Reset amount input
+                st.session_state['ingredient_input'] = ""  # Reset ingredient input
 
     # Function to add all ingredients from session state
     def add_all_ingredients():
