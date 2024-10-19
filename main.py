@@ -140,7 +140,7 @@ with col_input:
 
 # Button to add ingredients
 if st.button("ADD INGREDIENTS"):
-    add_all_ingredient()  # Add the ingredient from the text input
+    add_ingredient()  # Add the ingredient from the text input
 
 
 # Replace this section of your code
