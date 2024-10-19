@@ -98,40 +98,28 @@ with col1:
     def clear_ingredients():
         st.session_state['ingredients'] = []
 
-    # Function to add ingredient
-    # Function to add ingredient
-    # Function to add ingredient
-    # Function to add ingredient
-    # Function to add ingredient (with manual addition option)
-    # Function to add ingredient (with manual addition option)
+    
     # Function to add ingredient (adjusted to take parameters)
-    def add_ingredient(ingredient_name=None, ingredient_amount=None):
-            if ingredient_name is None:
-                ingredient_name = st.session_state['ingredient_input']
-            if ingredient_amount is None:
-                ingredient_amount = st.session_state['amount_input']
-            
-            if ingredient_name:  # Check if ingredient name is not empty
-                # Check if ingredient already exists
-                for i, (name, amount) in enumerate(st.session_state['ingredients']):
-                    if name.lower() == ingredient_name.lower():  # Case-insensitive comparison
-                        # If ingredient already exists and amount is provided, sum the amounts
-                        if ingredient_amount:  # Only sum if an amount is provided
-                            try:
-                                new_amount = str(float(amount.split()[0]) + float(ingredient_amount.split()[0])) + ' ' + ingredient_amount.split()[1]
-                                st.session_state['ingredients'][i] = (name, new_amount)
-                            except ValueError:
-                                st.warning("Invalid amount format. Please enter a valid number.")
-                        break
-                else:
-                    # Add new ingredient if it doesn't exist
-                    amount_to_add = ingredient_amount if ingredient_amount else "No amount specified"  # Use a default message if no amount is provided
-                    st.session_state['ingredients'].append((ingredient_name, amount_to_add))
-                    st.success(f"{ingredient_name} added successfully!")  # Success message for adding ingredient
-            
-                # Clear input fields after adding the ingredient
-                st.session_state['amount_input'] = ""  # Reset amount input
-                st.session_state['ingredient_input'] = ""  # Reset ingredient input
+    # Function to add ingredient (adjusted to take parameters)
+    def add_ingredient(ingredient_name=None):
+        if ingredient_name is None:
+            ingredient_name = st.session_state['ingredient_input']
+    
+        if ingredient_name:  # Check if ingredient name is not empty
+            # Check if ingredient already exists
+            for i, (name, _) in enumerate(st.session_state['ingredients']):
+                if name.lower() == ingredient_name.lower():  # Case-insensitive comparison
+                    st.success(f"{ingredient_name} is already in the ingredient list.")  # Notify that it's already there
+                    return  # Exit if the ingredient already exists
+    
+            # Add new ingredient if it doesn't exist
+            st.session_state['ingredients'].append((ingredient_name))  # Default message for amount
+            st.success(f"{ingredient_name} added successfully!")  # Success message for adding ingredient
+    
+            # Clear input fields after adding the ingredient
+            st.session_state['ingredient_input'] = ""  # Reset ingredient input
+
+
 
     # Function to add all ingredients from session state
     def add_all_ingredients():
@@ -139,27 +127,21 @@ with col1:
             add_ingredient(ingredient[0], ingredient[1])
 
         # Text input for ingredients
-    col_input, col_amount = st.columns(2)
+col_input, col_amount = st.columns(2)
 
-    with col_input:
-        st.text_input(
-            "Enter ingredient",
-            placeholder="e.g. chicken",
-            key='ingredient_input'
-        )
+with col_input:
+    # Update the text_input with an on_change callback
+    st.text_input(
+        "Enter ingredient",
+        placeholder="e.g. chicken",
+        key='ingredient_input',
+        on_change=add_ingredient  # Call add_ingredient when input changes
+    )
 
-    with col_amount:
-        st.text_input(
-            "Enter amount(required)",
-            placeholder="e.g. 500g, 2 cups",
-            key='amount_input',
-            on_change=add_ingredient
-        )
+# Button to add ingredients
+if st.button("ADD INGREDIENTS"):
+    add_ingredient()  # Add the ingredient from the text input
 
-
-    if st.button("ADD INGREDIENTS"):
-        for ingredient in st.session_state['ingredients']:
-            add_ingredient()  # Call the function to add each ingredient
 
 # Replace this section of your code
 # Header for uploading receipt
@@ -203,7 +185,7 @@ with st.sidebar:
         # Create a list to track ingredients that should be removed
         ingredients_to_remove = []
 
-        for i, (ingredient, amount) in enumerate(st.session_state['ingredients']):
+        for i, (ingredient) in enumerate(st.session_state['ingredients']):
             col_remove, col_display = st.columns([1, 4])  # Create columns for remove button and ingredient display
 
             with col_remove:
@@ -213,7 +195,7 @@ with st.sidebar:
                     
             with col_display:
                 # Display the ingredient
-                st.markdown(f"{ingredient} ({amount})")
+                st.markdown(f"{ingredient}")
 
         # Remove the ingredients marked for removal after displaying
         for index in reversed(ingredients_to_remove):  # Remove in reverse to avoid index issues
