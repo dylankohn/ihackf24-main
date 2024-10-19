@@ -112,7 +112,7 @@ with col1:
                 st.session_state['ingredients'] = []  # Reset to an empty list
 
             # Check if ingredient already exists
-            for i, (name, _) in enumerate(st.session_state['ingredients']):
+            for i, (name) in enumerate(st.session_state['ingredients']):
                 if name.lower() == ingredient_name.lower():  # Case-insensitive comparison
                     st.success(f"{ingredient_name} is already in the ingredient list.")  # Notify that it's already there
                     return  # Exit if the ingredient already exists
