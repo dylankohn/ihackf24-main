@@ -123,6 +123,7 @@ with col1:
 
     # Function to add all ingredients from session state
     def add_all_ingredients():
+        for ingredient in st.session_state['ingredients']:
             add_ingredient(ingredient[0], ingredient[1])
 
         # Text input for ingredients
@@ -139,7 +140,7 @@ with col_input:
 
 # Button to add ingredients
 if st.button("ADD INGREDIENTS"):
-    add_all_ingredients()  # Add the ingredient from the text input
+    add_all_ingredient()  # Add the ingredient from the text input
 
 
 # Replace this section of your code
