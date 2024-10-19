@@ -53,7 +53,7 @@ def get_recipe(ingredients, show_missing_ingredients):
     cleaned_ingredients = [parse_ingredient(ingredient)[1] for ingredient in ingredients]
     
     # Fetch recipes based on the ingredients provided
-    url = f"https://api.spoonacular.com/recipes/findByIngredients?ingredients={', '.join(cleaned_ingredients)}&number=1&apiKey={API_KEY}"
+    url = f"https://api.spoonacular.com/recipes/findByIngredients?ingredients={', '.join(cleaned_ingredients)}&number=5&apiKey={API_KEY}"
     response = requests.get(url)
     
     if response.status_code == 200:

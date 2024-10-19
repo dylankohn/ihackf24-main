@@ -109,14 +109,15 @@ with col1:
     
         if ingredient_name:  # Check if ingredient name is not empty
             for i, (name, amount) in enumerate(st.session_state['ingredients']):
-                if name.lower() == ingredient_name.lower():
-                    if ingredient_amount:
+                if name.lower() == ingredient_name.lower():  # Case-insensitive comparison
+                    if ingredient_amount:  # Only sum if an amount is provided
                         try:
                             # Split and convert safely
                             amount_value = float(amount.split()[0])  # First part of existing amount
                             ingredient_value = float(ingredient_amount.split()[0])  # First part of new amount
                             new_amount = str(amount_value + ingredient_value) + ' ' + ingredient_amount.split()[1]
                             st.session_state['ingredients'][i] = (name, new_amount)
+                            st.success(f"Updated: {ingredient_name} now has {new_amount}.")  # Success message for update
                         except (ValueError, IndexError):
                             st.warning("Invalid amount format. Please enter a valid number.")
                     break
@@ -124,10 +125,12 @@ with col1:
                 # Add new ingredient
                 amount_to_add = ingredient_amount if ingredient_amount else "No amount specified"
                 st.session_state['ingredients'].append((ingredient_name, amount_to_add))
+                st.success(f"Added: {ingredient_name} with amount {amount_to_add}.")  # Success message for new addition
     
-            # Clear input fields
-            st.session_state['amount_input'] = ""
-            st.session_state['ingredient_input'] = ""
+            # Clear input fields after adding the ingredient
+            st.session_state['amount_input'] = ""  # Reset amount input
+            st.session_state['ingredient_input'] = ""  # Reset ingredient input
+
 
 
         # Text input for ingredients
