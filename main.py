@@ -103,10 +103,11 @@ with col1:
     # Function to add ingredient
     # Function to add ingredient
     # Function to add ingredient (with manual addition option)
+    # Function to add ingredient (with manual addition option)
     def add_ingredient():
         ingredient_name = st.session_state['ingredient_input']
         ingredient_amount = st.session_state['amount_input']
-
+    
         if ingredient_name:  # Check if ingredient name is not empty
             # Check if ingredient already exists
             for i, (name, amount) in enumerate(st.session_state['ingredients']):
@@ -123,10 +124,12 @@ with col1:
                 # Add new ingredient if it doesn't exist
                 amount_to_add = ingredient_amount if ingredient_amount else "No amount specified"  # Use a default message if no amount is provided
                 st.session_state['ingredients'].append((ingredient_name, amount_to_add))
-
+                st.success(f"{ingredient_name} added successfully!")  # Success message for adding ingredient
+    
             # Clear input fields after adding the ingredient
             st.session_state['amount_input'] = ""  # Reset amount input
             st.session_state['ingredient_input'] = ""  # Reset ingredient input
+
 
         # Text input for ingredients
     col_input, col_amount = st.columns(2)
