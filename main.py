@@ -1,279 +1,278 @@
 import streamlit as st
 import pandas as pd
+from alternative import get_recipe, get_recipe_details
 from PIL import Image
-import requests
-import io
+import pytesseract
+import re
+
+# Set the path for tesseract if needed
+pytesseract.pytesseract.tesseract_cmd = r'/usr/local/bin/tesseract'  # Change this to your tesseract path
 
 # Set the page configuration
 st.set_page_config(page_title="Recipe Finder", layout="wide")
 
-# Initialize session state for ingredients and dynamic keys if they don't exist
+# Initialize session state
 if 'ingredients' not in st.session_state:
-    st.session_state['ingredients'] = []
-if 'ingredient_key' not in st.session_state:
-    st.session_state['ingredient_key'] = 0  # Dynamic key for ingredient input
-if 'amount_key' not in st.session_state:
-    st.session_state['amount_key'] = 0  # Dynamic key for amount input
-if 'show_uploader' not in st.session_state:
-    st.session_state['show_uploader'] = False  # Flag to toggle uploader visibility
+    st.session_state['ingredients'] = []  # Store ingredients as tuples (name, amount)
+if 'ingredients' not in st.session_state:
+    st.session_state['ingredients'] = []  # Store ingredients as tuples (name, amount)
+if 'ingredient_input' not in st.session_state:
+    st.session_state['ingredient_input'] = ""
+if 'amount_input' not in st.session_state:
+    st.session_state['amount_input'] = ""
+if 'saved_recipes' not in st.session_state:
+    st.session_state['saved_recipes'] = []  # Store recipe details
+if 'current_recipes' not in st.session_state:
+    st.session_state['current_recipes'] = []
+if 'current_recipe' not in st.session_state:
+    st.session_state['current_recipe'] = None
 
-# Spoonacular API Key (replace 'your_api_key' with your actual API key)
-spoonacular_api_key = "1e489973c24e437b92a3571cb5ef0e18"
+def extract_ingredients_from_image(image):
+    text = pytesseract.image_to_string(image)
+    ingredients = []
 
-# Function to add an ingredient and reset input
-def add_ingredient():
-    ingredient = st.session_state.get(f'ingredient_input_{st.session_state["ingredient_key"]}', '')
-    amount = st.session_state.get(f'amount_input_{st.session_state["amount_key"]}', '')
-    
-    if ingredient:  # Only add if the input is not empty
-        if amount:
-            st.session_state['ingredients'].append(f"{ingredient} ({amount})")  # Add the amount in parentheses
+    # Simple regex to find potential ingredients (customize as needed)
+    for line in text.split('\n'):
+        # Example regex to capture typical ingredient formats
+        match = re.match(r'(\d+\s?\w*)?\s*(.*)', line)
+        if match:
+            amount, ingredient = match.groups()
+            if ingredient:  # Only add if ingredient is not empty
+                ingredients.append((ingredient.strip(), amount.strip() if amount else "No amount specified"))
+
+    return ingredients
+
+# Function to convert the saved recipes into a CSV format
+def convert_to_csv(data):
+    df = pd.DataFrame(data)
+    return df.to_csv(index=False)
+
+# Layout
+col1, col2 = st.columns([2, 1])
+
+# Sidebar for current ingredients and saved recipes
+with col2:
+    with st.sidebar:
+        st.header("Saved Recipes")
+
+        # Dropdown for saved recipes
+        selected_recipe = st.selectbox("Select a recipe:", ["None"] + [recipe['title'] for recipe in st.session_state['saved_recipes']])
+        
+        # Display selected recipe details if not "None"
+        if selected_recipe != "None":
+            recipe_data = next((recipe for recipe in st.session_state['saved_recipes'] if recipe['title'] == selected_recipe), None)
+            if recipe_data:
+                st.subheader("Recipe Details:")
+                st.markdown(f"**Title:** {recipe_data['title']}")
+                if st.session_state.get('show_instructions', True):  # Check if instructions should be shown
+                    st.markdown(f"**Instructions:** {recipe_data['instructions'].replace('<ol>', '').replace('</ol>', '').replace('<li>', '').replace('</li>', '').replace('<br>', '')}")  # Clean up HTML tags
+                st.markdown(f"**Used Ingredients:** {', '.join(recipe_data['used_ingredients'])}")
+                st.markdown(f"**Missing Ingredients:** {', '.join(recipe_data['missing_ingredients'])}")
+                
+                # Check if nutrition facts should be shown
+                if st.session_state.get('show_nutrition', True):  
+                    st.markdown(f"**Nutrition Facts:** {recipe_data['nutrition']}")
+                
+                # Remove saved recipe button
+                if st.button("Remove Recipe", key=f"remove_{recipe_data['title']}"):
+                    st.session_state['saved_recipes'] = [r for r in st.session_state['saved_recipes'] if r['title'] != recipe_data['title']]
+                    st.success(f"{recipe_data['title']} has been removed from saved recipes.")
+
+                # Button to export saved recipes to a CSV file, shown only if a recipe is selected
+                if st.button("Export to CSV"):
+                    csv = convert_to_csv(st.session_state['saved_recipes'])
+                    st.download_button(
+                        label="Download CSV",
+                        data=csv,
+                        file_name='saved_recipes.csv',
+                        mime='text/csv'
+                    )
         else:
-            st.session_state['ingredients'].append(ingredient)
+            st.write("No recipe selected.")
 
-        # Reset input by incrementing the dynamic key to refresh the input fields
-        st.session_state['ingredient_key'] += 1
-        st.session_state['amount_key'] += 1
+# Left column for title and ingredient input
+with col1:
+    st.image("quickbite_logo.png", width=300)  # Title of the app
 
-        # Display confirmation message
-        st.write("Ingredients added to the list.")  # This displays the confirmation message after adding ingredients
+    # Function to clear all ingredients
+    def clear_ingredients():
+        st.session_state['ingredients'] = []
+
+    # Function to add ingredient
+    # Function to add ingredient
+    # Function to add ingredient
+    # Function to add ingredient
+    # Function to add ingredient (with manual addition option)
+    def add_ingredient():
+        ingredient_name = st.session_state['ingredient_input']
+        ingredient_amount = st.session_state['amount_input']
+
+        if ingredient_name:  # Check if ingredient name is not empty
+            # Check if ingredient already exists
+            for i, (name, amount) in enumerate(st.session_state['ingredients']):
+                if name.lower() == ingredient_name.lower():  # Case-insensitive comparison
+                    # If ingredient already exists and amount is provided, sum the amounts
+                    if ingredient_amount:  # Only sum if an amount is provided
+                        try:
+                            new_amount = str(float(amount.split()[0]) + float(ingredient_amount.split()[0])) + ' ' + ingredient_amount.split()[1]
+                            st.session_state['ingredients'][i] = (name, new_amount)
+                        except ValueError:
+                            st.warning("Invalid amount format. Please enter a valid number.")
+                    break
+            else:
+                # Add new ingredient if it doesn't exist
+                amount_to_add = ingredient_amount if ingredient_amount else "No amount specified"  # Use a default message if no amount is provided
+                st.session_state['ingredients'].append((ingredient_name, amount_to_add))
+
+            # Clear input fields after adding the ingredient
+            st.session_state['amount_input'] = ""  # Reset amount input
+            st.session_state['ingredient_input'] = ""  # Reset ingredient input
+
+        # Text input for ingredients
+    col_input, col_amount = st.columns(2)
+
+    with col_input:
+        st.text_input(
+            "Enter ingredient",
+            placeholder="e.g. chicken",
+            key='ingredient_input'
+        )
+
+    with col_amount:
+        st.text_input(
+            "Enter amount (optional)",
+            placeholder="e.g. 500g, 2 cups",
+            key='amount_input',
+            on_change=add_ingredient
+        )
+
+# Replace this section of your code
+# Header for uploading receipt
+    st.header("Upload Receipt")
+    if st.button("Add Receipt"):
+        st.session_state.camera_permission = True
+        uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+
+        if uploaded_file is not None:
+            image = Image.open(uploaded_file)
+            st.image(image, caption='Uploaded Image', use_column_width=True)
+            if st.button("Extract Ingredients"):
+                extracted_ingredients = extract_ingredients_from_image(image)
+                st.session_state['ingredients'].extend(extracted_ingredients)  # Add extracted ingredients to session state
+                st.success("Ingredients extracted successfully!")
+
+    # With this secti
+
+        # Take a picture button
+        if 'camera_permission' in st.session_state and st.session_state.camera_permission:
+    # Camera input
+            image_file = st.camera_input("Take a picture of the receipt")
+
+    # If a picture is taken, process it
+            if image_file is not None:
+                image = Image.open(image_file)
+                st.image(image, caption='Captured Image', use_column_width=False, width=300)  # Adjust width as needed
+                if st.button("Extract Ingredients"):
+                    extracted_ingredients = extract_ingredients_from_image(image)
+                    st.session_state['ingredients'].extend(extracted_ingredients)  # Add extracted ingredients to session state
+                    st.success("Ingredients extracted successfully!")
+        else:
+            # If permission has not been granted, show a message
+            st.warning("Please click 'Add Receipt' to give permission to use the camera.")
 
 
-# Function to clear all ingredients
-def clear_ingredients():
-    st.session_state['ingredients'] = []  # Reset the ingredients list
 
-# Function to detect the ingredient from an uploaded image using Spoonacular API
-def detect_ingredient(image):
-    api_url = f"https://api.spoonacular.com/food/images/analyze?apiKey={spoonacular_api_key}"
-    response = requests.post(api_url, files={"file": image})
-    
-    if response.status_code == 200:
-        return response.json().get("category", "Unknown ingredient")
-    return "Error detecting ingredient"
-
-# Function to simulate fetching recipes based on ingredients
-def get_recipe(ingredients):
-    api_url = f"https://api.spoonacular.com/recipes/findByIngredients?ingredients={ingredients}&apiKey={spoonacular_api_key}"
-    response = requests.get(api_url)
-    
-    if response.status_code == 200:
-        return response.json()  # Assuming the API returns a list of recipes
-    return None
-
-# Function to simulate fetching recipe details
-def get_recipe_details(recipe_id):
-    api_url = f"https://api.spoonacular.com/recipes/{recipe_id}/information?apiKey={spoonacular_api_key}"
-    response = requests.get(api_url)
-    
-    if response.status_code == 200:
-        return response.json()
-    return None
-
-# Function to handle form submission manually, ensuring everything works on the first click
-def submit_ingredient_form():
-    # Call add_ingredient when the form is submitted
-    add_ingredient()
-
-# Sidebar on the right
 with st.sidebar:
-    st.header("Saved Recipes")
-    with st.expander("View Saved Recipes"):
-        # Button to export saved recipes to a CSV file
-        if st.button("Export to CSV"):
-            csv = pd.DataFrame(st.session_state['ingredients']).to_csv(index=False)
-            st.download_button(
-                label="Download CSV",
-                data=csv,
-                file_name='saved_recipes.csv',
-                mime='text/csv'
-            )
-
-    # Button to clear all ingredients
-    if st.button("Clear All Ingredients"):
-        clear_ingredients()
-
-<<<<<<< HEAD
-            for i, (ingredient, amount) in enumerate(st.session_state['ingredients']):
-                col_remove, col_display = st.columns([1, 4])  # Create columns for remove button and ingredient display
-
-                with col_remove:
-                    # Create a button for each ingredient to remove it
-                    if st.button("X", key=f"remove_{ingredient}_{i}"):
-                        ingredients_to_remove.append(i)  # Mark this ingredient for removal
-                        
-                with col_display:
-                    # Display the ingredient
-                    st.markdown(f"{ingredient} ({amount})")
-
-            # Remove the ingredients marked for removal after displaying
-            for index in reversed(ingredients_to_remove):  # Remove in reverse to avoid index issues
-                st.session_state['ingredients'].pop(index)
-        else:
-            st.write("No ingredients added.")
-
-
-# Fetch recipes button
-st.image("quickbite_logo.png", width=300)
-if st.button("SEARCH RECIPES"):
-    if not st.session_state['ingredients']:
-        st.error("Please add ingredients before searching for recipes.")
-=======
-    # Display the list of ingredients
     st.header("Current Ingredients")
     if st.session_state['ingredients']:
-        st.markdown("\n".join(f"- {ingredient}" for ingredient in st.session_state['ingredients']))
->>>>>>> fc2c2fe587ef968fa9bdab6265d63e155f93c478
+        # Create a list to track ingredients that should be removed
+        ingredients_to_remove = []
+
+        for i, (ingredient, amount) in enumerate(st.session_state['ingredients']):
+            col_remove, col_display = st.columns([1, 4])  # Create columns for remove button and ingredient display
+
+            with col_remove:
+                # Create a button for each ingredient to remove it
+                if st.button("X", key=f"remove_{ingredient}_{i}"):
+                    ingredients_to_remove.append(i)  # Mark this ingredient for removal
+                    
+            with col_display:
+                # Display the ingredient
+                st.markdown(f"{ingredient} ({amount})")
+
+        # Remove the ingredients marked for removal after displaying
+        for index in reversed(ingredients_to_remove):  # Remove in reverse to avoid index issues
+            st.session_state['ingredients'].pop(index)
     else:
         st.write("No ingredients added.")
 
-# Main section for input and recipe fetching
-st.header("QUICKBITE")
-
-# Use a form to handle submission only when Enter is pressed, not when clicking outside
-with st.form("ingredient_form", clear_on_submit=True):
-    # Two columns: one for ingredient and one for amount
-    ingredient_col, amount_col = st.columns([2, 1])
-
-    # Ingredient input field with dynamic key to reset on each addition
-    with ingredient_col:
-        ingredient = st.text_input(
-            "Enter your ingredient",
-            placeholder="e.g. chicken, rice",
-            key=f'ingredient_input_{st.session_state["ingredient_key"]}'  # Dynamic key for ingredient input
-        )
-
-    # Amount input field with dynamic key to reset on each addition
-    with amount_col:
-        amount = st.text_input(
-            "Amount (optional)",
-            placeholder="e.g. 200g, 2 cups",
-            key=f'amount_input_{st.session_state["amount_key"]}'  # Dynamic key for amount input
-        )
-
-    # Submit button within the form triggers "Enter" key
-    submitted = st.form_submit_button("Add Ingredients", on_click=submit_ingredient_form)
-
-# Dropdown for additional options (checkboxes)
-with st.expander("Select Additional Features"):
-    show_missing_ingredients = st.checkbox("Show missing ingredients with available recipes")
-    show_instructions = st.checkbox("Show recipe instructions")
-    show_nutrition = st.checkbox("Show nutrition facts")
-    show_prices = st.checkbox("Show estimated prices for the missing ingredients")
+if st.button("ADD INGREDIENTS"):
+    for ingredient in st.session_state['ingredients']:
+        add_ingredient()  # Call the function to add each ingredient
 
 
-# Upload Photo button
-if st.button("Upload Photo"):
-    st.session_state['show_uploader'] = True  # Show the file uploader when the button is clicked
-
-
-# Function to detect ingredients from a receipt image using Spoonacular API
-def detect_ingredients_from_receipt(image):
-    api_url = f"https://api.spoonacular.com/food/products/detect?apiKey={spoonacular_api_key}"  # Spoonacular endpoint for detecting from receipts
-    response = requests.post(api_url, files={"file": image})
-    
-    if response.status_code == 200:
-        # Extract ingredient names from the detected products
-        products = response.json().get("products", [])
-        return [product['title'] for product in products]
-    return []
-
-# Upload Photo button
-if st.button("Upload Receipt"):
-    st.session_state['show_uploader'] = True  # Show the file uploader when the button is clicked
-
-# Display file uploader and process the image without showing it
-if st.session_state['show_uploader']:
-    uploaded_image = st.file_uploader("Upload an image of a receipt", type=["jpg", "png", "jpeg"])
-
-    if uploaded_image:
-        img_bytes = io.BytesIO()
-        image = Image.open(uploaded_image)
-        image.save(img_bytes, format="PNG")
-        img_bytes.seek(0)
-
-        # Call the Spoonacular API to detect ingredients from the receipt
-        detected_ingredients = detect_ingredients_from_receipt(img_bytes)
-
-        if detected_ingredients:
-            st.write(f"Detected Ingredients: {', '.join(detected_ingredients)}")
-            # Optionally add detected ingredients to the ingredients list
-            st.session_state['ingredients'].extend(detected_ingredients)
-            st.write("Ingredients from receipt added to the list.")
-        else:
-            st.write("No ingredients detected from the receipt.")
-
-
-# Display file uploader and process the image without showing it
-if st.session_state['show_uploader']:
-    uploaded_image = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
-
-    if uploaded_image:
-        img_bytes = io.BytesIO()
-        image = Image.open(uploaded_image)
-        image.save(img_bytes, format="PNG")
-        img_bytes.seek(0)
-
-        # Call the backend API or detection function
-        detected_ingredient = detect_ingredient(img_bytes)
-        st.write(f"Detected Ingredient: **{detected_ingredient}**")
-
-        # Optional: Allow the user to add the detected ingredient
-        if st.button("Add Detected Ingredient"):
-            st.session_state['ingredients'].append(detected_ingredient)
-
-
-
-# Fetch Recipes button
-if st.button("FETCH RECIPES"):
-    if st.session_state['ingredients']:
-        user_ingredients = ", ".join(st.session_state['ingredients'])
-        st.header("Recipes Based on Your Ingredients")
-
-        # Simulating fetching recipes based on the ingredients
-        recipes = get_recipe(user_ingredients)  # Use actual API in production
-
-        # Check if recipes is None and handle the error
-        if recipes is None:
-            st.error("Error fetching recipes. Please try again.")
+# Fetch recipes button
+if st.button("SEARCH RECIPES"):
+    if not st.session_state['ingredients']:
+        st.error("Please add ingredients before searching for recipes.")
+    else:
+        user_ingredients = [ingredient[0] for ingredient in st.session_state['ingredients']]
+        recipes = get_recipe(user_ingredients, st.session_state.get("show_missing_ingredients_expander", True))
+        if recipes is None or len(recipes) == 0:
+            st.error("No recipes found. Please try again.")
         else:
             st.subheader("Recipes Found:")
-
-            # Display the recipe results inside the square container
-            for recipe in recipes:  # Assuming 'recipes' is a list of recipe details
-                st.markdown(f"<div style='margin: 5px; text-align: left;'><strong>{recipe['title']}</strong></div>", unsafe_allow_html=True)
-
-                # Fetch and display detailed recipe information
-                recipe_details = get_recipe_details(recipe['id'])  # Fetch detailed recipe information
+            st.session_state['current_recipes'] = recipes  # Store current recipes
+            for recipe in recipes:
+                recipe_info = f"""
+                <div style='margin: 10px 0; padding: 10px; border: 3px solid #16536b; border-radius: 5px;'>
+                    <strong>{recipe['title']}</strong>
+                </div>
+                """
+                st.markdown(recipe_info, unsafe_allow_html=True)
+                recipe_details = get_recipe_details(recipe['id'])
                 if recipe_details:
-                    # Display cooking instructions
+                    # Get instructions or default to a message
                     instructions = recipe_details.get('instructions', 'No instructions available.')
-                    st.markdown(f"<p><strong>Instructions:</strong> {instructions}</p>", unsafe_allow_html=True)
-
-                    # Safely handle 'usedIngredients' and 'missedIngredients'
-                    used_ingredients = recipe_details.get('usedIngredients', [])
-                    if used_ingredients:
-                        used_ingredient_names = [ingredient['name'] for ingredient in used_ingredients]
-                        st.markdown(f"<p><strong>Used Ingredients:</strong> {', '.join(used_ingredient_names)}</p>", unsafe_allow_html=True)
-                    else:
-                        st.markdown("<p><strong>Used Ingredients:</strong> Not available</p>", unsafe_allow_html=True)
-
-                    missed_ingredients = recipe_details.get('missedIngredients', [])
-                    if missed_ingredients:
-                        missed_ingredient_names = [ingredient['name'] for ingredient in missed_ingredients]
-                        st.markdown(f"<p><strong>Missing Ingredients:</strong> {', '.join(missed_ingredient_names)}</p>", unsafe_allow_html=True)
-                    else:
-                        st.markdown("<p><strong>Missing Ingredients:</strong> Not available</p>", unsafe_allow_html=True)
-
-                    # Display nutrition facts if available
+                    # Clean up HTML tags if instructions exist
+                    cleaned_instructions = instructions.replace('<ol>', '').replace('</ol>', '').replace('<li>', '').replace('</li>', '') if instructions else 'No instructions available.' 
+                    if st.session_state.get('show_instructions', True):  # Check if instructions should be shown
+                        st.markdown(f"<p><strong>Instructions:</strong> {cleaned_instructions}</p>", unsafe_allow_html=True)
+                    used_ingredients = [f"{ingredient['amount']} {ingredient['unit']} {ingredient['name']}" for ingredient in recipe['usedIngredients']]
+                    st.markdown(f"<p><strong>Used Ingredients:</strong> {', '.join(used_ingredients)}</p>", unsafe_allow_html=True)
+                    missing_ingredients = [f"{ingredient['amount']} {ingredient['unit']} {ingredient['name']}" for ingredient in recipe['missedIngredients']]
+                    st.markdown(f"<p><strong>Missing Ingredients:</strong> {', '.join(missing_ingredients)}</p>", unsafe_allow_html=True)
                     nutrition = recipe_details.get('nutrition')
+                    nutrition_info = ""
                     if nutrition:
-                        nutrients = nutrition.get('nutrients', [])
-                        if nutrients:
-                            nutrition_info = "\n".join(f"{nutrient['name']}: {nutrient['amount']} {nutrient['unit']}" for nutrient in nutrients)
-                            st.markdown(f"<p><strong>Nutrition Facts:</strong><br>{nutrition_info}</p>", unsafe_allow_html=True)
+                        nutrients = nutrition['nutrients']
+                        nutrition_info = "\n".join(f"{nutrient['name']}: {nutrient['amount']} {nutrient['unit']}" for nutrient in nutrients)
+                    # Check if nutrition facts should be shown
+                    if st.session_state.get('show_nutrition', True):
+                        st.markdown(f"<p><strong>Nutrition Facts:</strong><br>{nutrition_info}</p>", unsafe_allow_html=True)
+                    
+                    # Recipe data dictionary
+                    recipe_data = {
+                        'title': recipe['title'],
+                        'instructions': cleaned_instructions,  # Use cleaned instructions here
+                        'used_ingredients': used_ingredients,
+                        'missing_ingredients': missing_ingredients,
+                        'nutrition': nutrition_info if nutrition else 'No nutrition information available.',
+                        'link': recipe_details['link'] if recipe_details['link'].startswith(('http://', 'https://')) else f"http://{recipe_details['link']}"  # Ensure the link is complete
+                    }
+                    
+                    # Button to save the recipe using on_click
+                    def save_recipe(recipe_data):
+                        if recipe_data['title'] not in [r['title'] for r in st.session_state['saved_recipes']]:
+                            st.session_state['saved_recipes'].append(recipe_data)
+                            st.success(f"{recipe_data['title']} saved to your recipes.")
+                        else:
+                            st.warning(f"{recipe_data['title']} is already in your saved recipes.")
+                    
+                    st.button("Save Recipe", key=f"save_{recipe['id']}", on_click=save_recipe, args=(recipe_data,))
 
-                    # Link to the recipe
-                    st.markdown(f"[View Full Recipe](https://spoonacular.com/recipes/{recipe['id']})", unsafe_allow_html=True)
-    else:
-        st.warning("Please add at least one ingredient to fetch recipes.")
+# Optional expander for additional features
+with st.expander("Show Additional Features"):
+    show_missing_ingredients_expander = st.checkbox("Show Recipes With Missing Ingredients", value=False, key="show_missing_ingredients_expander")
+    show_instructions = st.checkbox("Show Instructions", value=True, key="show_instructions")  # Added this checkbox
+    show_nutrition = st.checkbox("Show Nutrition Facts", value=True, key="show_nutrition")  # Added this checkbox
