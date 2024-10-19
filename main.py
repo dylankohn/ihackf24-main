@@ -111,12 +111,6 @@ with col1:
             if not isinstance(st.session_state['ingredients'], list):
                 st.session_state['ingredients'] = []  # Reset to an empty list
 
-            # Check if ingredient already exists
-            for i, (name) in enumerate(st.session_state['ingredients']):
-                if name.lower() == ingredient_name.lower():  # Case-insensitive comparison
-                    st.success(f"{ingredient_name} is already in the ingredient list.")  # Notify that it's already there
-                    return  # Exit if the ingredient already exists
-
             # Add new ingredient if it doesn't exist
             st.session_state['ingredients'].append((ingredient_name))  # Default message for amount
             st.success(f"{ingredient_name} added successfully!")  # Success message for adding ingredient
