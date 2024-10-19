@@ -101,23 +101,29 @@ with col1:
     
     # Function to add ingredient (adjusted to take parameters)
     # Function to add ingredient (adjusted to take parameters)
+# Function to add ingredient
     def add_ingredient(ingredient_name=None):
         if ingredient_name is None:
             ingredient_name = st.session_state['ingredient_input']
-    
+
         if ingredient_name:  # Check if ingredient name is not empty
+            # Ensure ingredients is a list
+            if not isinstance(st.session_state['ingredients'], list):
+                st.session_state['ingredients'] = []  # Reset to an empty list
+
             # Check if ingredient already exists
             for i, (name, _) in enumerate(st.session_state['ingredients']):
                 if name.lower() == ingredient_name.lower():  # Case-insensitive comparison
                     st.success(f"{ingredient_name} is already in the ingredient list.")  # Notify that it's already there
                     return  # Exit if the ingredient already exists
-    
+
             # Add new ingredient if it doesn't exist
             st.session_state['ingredients'].append((ingredient_name))  # Default message for amount
             st.success(f"{ingredient_name} added successfully!")  # Success message for adding ingredient
-    
+
             # Clear input fields after adding the ingredient
             st.session_state['ingredient_input'] = ""  # Reset ingredient input
+
 
 
 
