@@ -140,7 +140,7 @@ with col1:
 
     with col_amount:
         st.text_input(
-            "Enter amount (optional)",
+            "Enter amount (required)",
             placeholder="e.g. 500g, 2 cups",
             key='amount_input',
             on_change=add_ingredient
