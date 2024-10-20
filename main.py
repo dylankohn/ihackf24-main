@@ -106,7 +106,7 @@ with col1:
     def add_ingredient():
         ingredient_name = st.session_state['ingredient_input']
         ingredient_amount = st.session_state['amount_input']
-    
+
         if ingredient_name:  # Check if ingredient name is not empty
             for i, (name, amount) in enumerate(st.session_state['ingredients']):
                 if name.lower() == ingredient_name.lower():  # Case-insensitive comparison
@@ -126,7 +126,7 @@ with col1:
                 amount_to_add = ingredient_amount if ingredient_amount else "No amount specified"
                 st.session_state['ingredients'].append((ingredient_name, amount_to_add))
                 st.success(f"Added: {ingredient_name} with amount {amount_to_add}.")  # Success message for new addition
-    
+
             # Clear input fields after adding the ingredient
             st.session_state['amount_input'] = ""  # Reset amount input
             st.session_state['ingredient_input'] = ""  # Reset ingredient input
@@ -279,6 +279,6 @@ if st.button("SEARCH RECIPES"):
 
 # Optional expander for additional features
 with st.expander("Show Additional Features"):
-    show_missing_ingredients_expander = st.checkbox("Show Recipes With Missing Ingredients", value=False, key="show_missing_ingredients_expander")
+    show_missing_ingredients_expander = st.checkbox("Show Recipes With Missing Ingredients", value=True, key="show_missing_ingredients_expander")
     show_instructions = st.checkbox("Show Instructions", value=True, key="show_instructions")  # Added this checkbox
     show_nutrition = st.checkbox("Show Nutrition Facts", value=True, key="show_nutrition")  # Added this checkbox
